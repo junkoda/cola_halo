@@ -964,7 +964,7 @@ void global_linking(HaloInfo* h, const int nhalo_total)
     free(nglobal_linking);
     free(global_linking);
 
-    printf("global_linking done\n");
+    msg_printf(verbose, "global_linking done\n");
   }
 
 }

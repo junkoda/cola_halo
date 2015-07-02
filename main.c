@@ -59,6 +59,8 @@ int main(int argc, char* argv[])
 
   msg_set_loglevel(param.loglevel);
 
+  confirm_parameters(&param, argv[argc-1]);
+
   fft_init(multi_thread);
   comm_init(param.pm_nc_factor*param.nc, param.nc, param.boxsize);
 
