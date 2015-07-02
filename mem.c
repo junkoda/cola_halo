@@ -47,7 +47,7 @@ Snapshot* allocate_snapshot(const int nc, const int nx, const int np_alloc, void
   snapshot->np_total= nc_long*nc_long*nc_long;
   snapshot->p= mem; assert(mem_size >= sizeof(ParticleMinimum)*np_alloc);
   snapshot->nc= nc;
-  snapshot->a= 0.0f; //snapshot->a_v= 0.0f; snapshot->a_x= 0.0f;
+  snapshot->a= 0.0f;
 
   return snapshot;
 }
@@ -57,7 +57,7 @@ void allocate_shared_memory(const int nc, const int nc_factor, const double np_a
   // Allocate shared memory
 
   // mem1
-  //  2LPT grids / PM density grid / FoF kdtree
+  //   for 2LPT grids / PM density grid / FoF kdtree
 
   // Memory for 2LPT (6*np_local words)
   ptrdiff_t local_nx, local_x_start;
@@ -66,7 +66,6 @@ void allocate_shared_memory(const int nc, const int nc_factor, const double np_a
 			    &local_nx, &local_x_start);
   ptrdiff_t ncomplex_lpt= 12*size_lpt_one;
 
-  //const int np_alloc= (int)(np_alloc_factor*nc*nc*(nx+1));
   const int np_alloc= (int)(np_alloc_factor*nc*nc*(local_nx+1));
 
   msg_printf(verbose, "%d Mbytes requested for LPT\n",
@@ -96,7 +95,6 @@ void allocate_shared_memory(const int nc, const int nc_factor, const double np_a
 	     (int)(size_fof/(1024*1024)));
 
 
-  //msg_printf(verbose, "debug %d %d\n", size_fof, size1);
   if(size_fof > size1) {
     ncomplex1= size_fof/sizeof(fftwf_complex) + 1;
     size1= size_fof;
@@ -111,9 +109,8 @@ void allocate_shared_memory(const int nc, const int nc_factor, const double np_a
 	      (int)(mem->size1/(1024*1024)));
   
   // mem2
-  // PM density_k mesh and snapshot
+  //   for PM density_k mesh and snapshot
   size_t ncomplex2= (Ngrid/2+1)*Ngrid*local_ny; //ncomplex_pm;
-  //size_t size2= sizeof(fftwf_complex)*size_pm_one; 
   size_t size2= sizeof(fftwf_complex)*(Ngrid/2+1)*Ngrid*local_ny;
 
   msg_printf(verbose, "%d Mbytes requested for delta_k mesh (mem2). ny=%d\n",

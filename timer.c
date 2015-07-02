@@ -1,3 +1,6 @@
+//
+// Measures the run time
+//
 #include <sys/time.h>
 #include "msg.h"
 #include "timer.h"
@@ -8,20 +11,14 @@
 static const char * CatName[]= {"Init", "2LPT", "COLA", "Snapshot"};
 static const char * SubName[]= {"", "fft", "assign", "force_mesh", "pforce", "check", "comm", "evolve", "write", "kd_build", "kd_link", "interpolate", "global", "smalldata"};
 
-//static const int nCategory= 4;
-//static const int nSubCategory= 4;
-
 static int initialized= 0;
 static enum Category Cat;
 static double Time[nCategory][nSubCategory], tBegin[nCategory][nSubCategory];
-//double Time[4][4], tBegin[4][4];
 
 
 static double now()
 {
   struct timeval tp;
-  //struct timezone tzp;
-  //gettimeofday(&tp,&tzp);
   gettimeofday(&tp, 0);
 
   return (double) tp.tv_sec + (double) tp.tv_usec * 1.e-6;

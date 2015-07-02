@@ -1,3 +1,6 @@
+//
+// Use the LUA programming language for the parameter file
+// set -DUSE_LUA in Makefile
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +30,6 @@ int read_parameters(const int argc, char * argv[],
 
   char const * const filename= argv[argc-1];
 
-  //int myrank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank_);
   if(myrank_ == 0) {
     int ret= read_parameter_file(filename, param);

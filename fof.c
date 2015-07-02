@@ -347,9 +347,6 @@ static inline void merge_halo(int i, int j)
   assert(0 <= i && i < NHaloBuf);
   assert(0 <= j && j < NHalo); // ** slow check
 
-  //msg_printf("halo merge %d -> %d\n", i, j);
-  //printf("halo merge %d -> %d\n", i, j);
-
   Halo[i].merge_to= j;
 }
 
@@ -630,15 +627,6 @@ int kdFoF(KD kd,float fEps)
 }
 
 
-/*
-void kdFinish(KD kd)
-{
-  //free(kd->p);
-  //free(kd->kdNodes);
-  //free(kd);
-}
-*/
-
 //
 // MPI Communication
 //
@@ -663,7 +651,6 @@ static int fof_send_buffer_positions(Snapshot* const snapshot, int* igrp)
     msg_abort(7100, "Error: Not enough space for FOF buffer particles: "
 	            "%d + %d particles ", np_local, nrecv);
 
-  //msg_printf("FOF buffer particles %d %d\n", np_export, nrecv);
   comm_sendrecv(ToRight, dx_buf, 3*np_export, dx_recv_buf, 3*nrecv, MPI_FLOAT);
 
   // Buffer particle positions added as particles np_local <= i 
@@ -1039,7 +1026,8 @@ void fof_init(const int np_alloc, const int nc, void* mem, size_t mem_size)
   mem= Map + np_alloc; bytes += sizeof(int)*3*np_alloc;
 
 
-  msg_printf(info, "%d Mbytes allocated for FOF halo finding within mem1\n", bytes/(1024*1024));
+  msg_printf(info, "%d Mbytes allocated for FOF halo finding within mem1\n",
+	     bytes/(1024*1024));
 
   assert(bytes <= mem_size);
 }

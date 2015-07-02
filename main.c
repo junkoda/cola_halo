@@ -333,19 +333,32 @@ void snapshot_time(const float aout, const int iout,
 {
   // Halo finding and snapshot outputs
 
-  char filebase[256];      // TODO: make 256 to variable number...?
+  char filebase[256];
   const int isnp= iout+1;
-  char suffix= 'a' + iout; // TODO: not suited for large nout -- change to #
+  char suffix= 'a' + iout;
+
+  // If you prefer other output filename format (not a,b,c, for example
+  // Change the sprintf statements below
+  // sprintf(filebase, "%s%05d_%03d", snapshot->filename, snapshot->seed, iout);
+  // would give snp00001_000
+  
                                                        timer_set_category(Snp);
   cola_set_snapshot(aout, particles, snapshot);
 
   const int nc= snapshot->nc; assert(nc > 0);
   const float boxsize= snapshot->boxsize; assert(boxsize > 0.0f);
 
+  // FoF halo catalogue (text file)
+  if(fof_filename) {
+    const float ll= (float)(fof_linking_factor*boxsize/nc);// FoF linking length
+    fof_find_halos(snapshot, ll);  // move_particles done here
+    sprintf(filebase, "%s%05d%c.txt", fof_filename, snapshot->seed, suffix);
+    fof_write_halos(filebase);
+  }
+
 
                                                        timer_start(write);
   // Gadget snapshot for all particles
-  // periodic wrapup not done, what about after fof? what about doing move_particle_min here?
   if(snapshot->filename) {
     sprintf(filebase, "%s%05d%c", snapshot->filename, snapshot->seed, suffix);
     write_snapshot(filebase, snapshot, write_longid);
@@ -355,8 +368,10 @@ void snapshot_time(const float aout, const int iout,
   // particle subsample (binary)
   if(subsample_filename) {
     sprintf(filebase, "%s%05d%c.b", subsample_filename, snapshot->seed, suffix);
-    //write_subsample(filebase, subsample_factor, snapshot, mem1, size1); // this is regular subsamle but not used. Random subampling is used.
-    // TODO: periodic wrapup not done. What about after fof?
+
+    // This is an alternative option of subsamplig (regular subsampling)
+    // write_subsample(filebase, subsample_factor, snapshot, mem1, size1);
+
     write_random_sabsample(filebase, snapshot, mem1, size1);
   }
 
@@ -368,19 +383,8 @@ void snapshot_time(const float aout, const int iout,
 
                                                        timer_stop(sub);
   // text file of a slice
-  //sprintf(filebase, "slice%02d", isnp); temp
-  //write_snapshot_slice(filebase, snapshot, boxsize); temp
-
-
-  const float ll= (float)(fof_linking_factor*boxsize/nc); // FoF linking length
-  fof_find_halos(snapshot, ll);
-
-  // FoF halo catalogue (text file)
-  if(fof_filename) {
-    // comment: move_particles done here
-    sprintf(filebase, "%s%05d%c.txt", fof_filename, snapshot->seed, suffix);
-    fof_write_halos(filebase);
-  }
+  // sprintf(filebase, "slice%02d", isnp); temp
+  // write_snapshot_slice(filebase, snapshot, boxsize);
 
   const double z_out= 1.0/aout - 1.0;
   msg_printf(normal, "snapshot %d (%c) written z=%4.2f a=%5.3f\n", 

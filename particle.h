@@ -33,12 +33,11 @@ typedef struct {
   int np_allocated;
   long long np_total;
   float np_average;
-  float a; //, a_x, a_v;
+  float a;
   float boxsize;
   int nc;
   float omega_m, h;
   int seed;
-  //char filename[64];
   char* filename;
 } Snapshot;
 

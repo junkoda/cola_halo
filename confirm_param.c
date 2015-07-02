@@ -1,3 +1,6 @@
+//
+// Check necessary parameters are initialized and print the parameters
+//
 #include <stdio.h>
 #include "parameters.h"
 #include "msg.h"

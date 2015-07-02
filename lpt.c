@@ -46,14 +46,6 @@ double F2_Omega(const double a);
 void lpt_init(const int nc, const void* mem, const size_t size)
 {
   // nc: number of mesh per dimension
-  /*
-  ptrdiff_t local_nx, local_x_start,
-            local_ny_after_transpose, local_y_start_after_transpose;
-  ptrdiff_t total_size= 
-    fftwf_mpi_local_size_3d_transposed(nc, nc, nc, MPI_COMM_WORLD,
-				       &local_nx, &local_x_start,
-		     &local_ny_after_transpose, &local_y_start_after_transpose);
-  */
 
   ptrdiff_t local_nx, local_x_start;
   ptrdiff_t total_size=
@@ -170,9 +162,6 @@ int lpt_set_displacement(const double InitTime, const double omega_m, const int 
 
   double vel_prefac = InitTime * hubble_a * F_Omega(InitTime);
   double vel_prefac2 = InitTime * hubble_a * F2_Omega(InitTime);
-
-  //vel_prefac /= sqrt(InitTime);	// converts to Gadget velocity
-  //vel_prefac2 /= sqrt(InitTime);
 
   const double fac = pow(2*M_PI/Box, 1.5);
 
@@ -511,55 +500,6 @@ int lpt_set_displacement(const double InitTime, const double omega_m, const int 
 
     fftwf_mpi_execute_dft_c2r(Disp_plan[axes], cdisp[axes], disp[axes]);
     fftwf_mpi_execute_dft_c2r(Disp2_plan[axes], cdisp2[axes], disp2[axes]);
-    //fftw_execute(Disp_plan[axes]);     // cdisp[axes]  -> disp[axes]
-    //fftw_execute(Disp2_plan[axes]);    // cdisp2[axes] -> disp2[axes]
-
-    
-    /*
-    // now get the plane on the right side from neighbour on the right, 
-    // and send the left plane
-    
-    int recvTask = ThisTask;
-    do {
-      recvTask--;
-      if(recvTask < 0)
-	recvTask = NTask - 1;
-    } while(Local_nx_table[recvTask] == 0);
-    
-    sendTask = ThisTask;
-    do {
-      sendTask++;
-      if(sendTask >= NTask)
-	sendTask = 0;
-    } while(Local_nx_table[sendTask] == 0);
-      
-    // use non-blocking send
-      
-    if(Local_nx > 0) {
-      // send ZA disp
-      MPI_Isend(&(disp[axes][0]),
-		sizeof(fftw_real) * Nmesh * (2 * (Nmesh / 2 + 1)),
-		MPI_BYTE, recvTask, 10, MPI_COMM_WORLD, &request);
-	      
-      MPI_Recv(&(disp[axes][(Local_nx * Nmesh) * (2 * (Nmesh / 2 + 1))]),
-	       sizeof(fftw_real) * Nmesh * (2 * (Nmesh / 2 + 1)),
-	       MPI_BYTE, sendTask, 10, MPI_COMM_WORLD, &status);
-	      
-      MPI_Wait(&request, &status);
-
-	      
-      // send 2nd order disp
-      MPI_Isend(&(disp2[axes][0]),
-		sizeof(fftw_real) * Nmesh * (2 * (Nmesh / 2 + 1)),
-		MPI_BYTE, recvTask, 10, MPI_COMM_WORLD, &request);
-      
-      MPI_Recv(&(disp2[axes][(Local_nx * Nmesh) * (2 * (Nmesh / 2 + 1))]),
-	       sizeof(fftw_real) * Nmesh * (2 * (Nmesh / 2 + 1)),
-	       MPI_BYTE, sendTask, 10, MPI_COMM_WORLD, &status);
-      
-      MPI_Wait(&request, &status);
-    }
-    */
   }
 
   msg_printf(verbose, "Setting particle grid and displacements\n");
@@ -582,8 +522,6 @@ int lpt_set_displacement(const double InitTime, const double omega_m, const int 
   const double omega=Omega/(Omega + (1.0 - Omega)*a*a*a);
   const double D2= Dplus*Dplus*pow(omega/Omega, -1.0/143.0);
   const double D20= pow(Omega, -1.0/143.0);
-
-  //const double D2= Dplus*Dplus; 
 
   msg_printf(verbose, "Inital growth factor (a=%g), D= %g D2= %g\n", 
 	     InitTime, Dplus, D2);

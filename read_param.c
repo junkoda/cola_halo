@@ -17,7 +17,6 @@
 #include "msg.h"
 
 static int myrank_;
-//static const buf_len= 1024; // ToDo: malloc buf
 
 int read_parameter_file(const char filename[], Parameters* const param);
 static void bcast_string(char** string, int* len);
@@ -26,6 +25,7 @@ static void bcast_array_double(double** parray, int* len);
 // Utilities
 static void remove_comments(char* str)
 {
+  // any string after -- is a coment
   for(char* p=str; *p != '\0'; p++) {
     if(*p == '-' && *(p+1) == '-') {
       *p='\0';
@@ -46,6 +46,8 @@ static char* skip_spaces(char* p)
 
 static char* get_name(char* p, char* name)
 {
+  // get the name of the variable
+  // name = value
   p= skip_spaces(p);
 
   while(*p != ' ' && *p != '=' && p != '\0')
@@ -58,6 +60,7 @@ static char* get_name(char* p, char* name)
 
 static char* get_operator(char* p)
 {
+  // skip the = sign after the variable name
   p= skip_spaces(p);
 
   while(*p == '=')
@@ -68,6 +71,7 @@ static char* get_operator(char* p)
 
 static int get_int(char* p)
 {
+  // name = integer
   p= skip_spaces(p);
 
   if(isdigit(*p)) 
@@ -78,6 +82,7 @@ static int get_int(char* p)
 
 static double get_double(char* p)
 {
+  // name = double
   p= skip_spaces(p);
 
   if(isdigit(*p)) 
@@ -88,7 +93,7 @@ static double get_double(char* p)
 
 static char* get_string(char* p, int* len)
 {
-  // warning: no protection for string (filename) over 1024 characters
+  // name = "string"
   char const * const original_p= p;
   char buf_str[1024];
   char* dest= buf_str;
@@ -116,6 +121,7 @@ static char* get_string(char* p, int* len)
 
 static int get_bool(char* p)
 {
+  // name = true or false
   p= skip_spaces(p);
 
   if(*p == 't' || *p == 'T' || *p == '1')
@@ -132,8 +138,9 @@ static int get_bool(char* p)
 
 static double* get_numarray(char* p, int* len)
 {
+  // name = {1,2,3}
   char const * const original_p= p;
-  int nalloc= 10;
+  int nalloc= 10; // initial size. Gets bigger if necessary.
   double* array= (double*) malloc(sizeof(double)*nalloc);
   
   while(*p == ' ' || *p == '\t') p++;
@@ -186,7 +193,6 @@ int read_parameters(const int argc, char * argv[], Parameters* const param)
 
   char const * const filename= argv[argc-1];
 
-  //int myrank;
   MPI_Comm_rank(MPI_COMM_WORLD, &myrank_);
   if(myrank_ == 0) {
     int ret= read_parameter_file(filename, param);

@@ -1,5 +1,5 @@
 //
-// 
+// Subsample the N-body particle and write to file 
 //
 #include <stdio.h>
 #include <stdlib.h>
@@ -108,6 +108,8 @@ void write_random_sabsample(const char filename[], Snapshot const * const snapsh
   }
   free(nsub_recv);
 }
+
+// Regular subsampling (not used, but has a benefit of not having shot noise)
 
 /*
 void write_subsample(const char filename[], const int fac, Snapshot const * const snapshot, void* const mem, size_t mem_size)

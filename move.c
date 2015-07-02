@@ -127,7 +127,6 @@ int sendrecv_particles(const int dix, Particle* const buf, const int nbuf, Parti
     else
       break;
   }
-  //printf("%d %d\n", i, j);
 
   int nsend, nstay;
   if(j == -1) {
@@ -153,12 +152,6 @@ int sendrecv_particles(const int dix, Particle* const buf, const int nbuf, Parti
   const int node_to= comm_node(dix);
   const int node_from= comm_node(-dix);
 
-  // *** debug!!!
-  //fprintf(stderr, "n%d Sending %d particles to node %d (step %+d)\n", 
-  //	  comm_this_node(), nsend, node_to, dix);
-
-  //msg_printf(verbose, "Sending %d particles to node %d (step %+d)\n", 
-  //nsend, node_to, dix);
 
   MPI_Barrier(MPI_COMM_WORLD); // debug!!!
   MPI_Sendrecv(&nsend, 1, MPI_INT, node_to, tag, 

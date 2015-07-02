@@ -61,17 +61,8 @@ int main(int argc, char* argv[])
   fft_init(multi_thread);
   comm_init(nc_factor*param.nc, param.nc, param.boxsize);
 
-  //const int nsteps= param.ntimestep;
-  //const double a_final= param.a_final;
-
-  //power_init("camb0_matterpower.dat", a_init, sigma8, OmegaM, OmegaLambda);
-  //power_init(param.power_spectrum_file, a_init, sigma8, OmegaM, OmegaLambda);
-
-
   Memory mem; 
   allocate_shared_memory(param.nc, nc_factor, param.np_alloc_factor, &mem); 
-  //lpt_init(param.nc, mem.mem1, mem.size1);
-  //const int local_nx= lpt_get_local_nx();
 
   const int nc= param.nc;
   ptrdiff_t local_nx, local_x_start;
@@ -125,8 +116,6 @@ int main(int argc, char* argv[])
 
     char filebase[256];
     for(int iout=0; iout<100000; iout++) { 
-      //const int iout= 0;
-      //char suffix= 'a' + iout;
       
       if(snapshot->filename)
 	msg_abort(1, "filename snapshot is not set in the parameter file\n");
@@ -183,114 +172,6 @@ int main(int argc, char* argv[])
     fclose(fp_dir);
   
   msg_printf(normal, "Processed all directories. halo done.\n");
-  // done
-  /*
-  const int nout= 4;
-  float aout[nout];
-  for(int i=0; i<nout; i++)
-    aout[i] = 1.0/(1+z_out[i]);
-
-  for(int irealization=0; irealization<param.nrealization; irealization++) {
-    MPI_Barrier(MPI_COMM_WORLD);
-    msg_printf(verbose, "\n%d/%d realization.\n", irealization+1, param.nrealization);
-    int seed= param.random_seed + irealization;
-
-    int iout= 0;
-
-    // Set initial grid and 2LPT desplacement
-    //timer_set_category(LPT);
-    //lpt_set_displacement(a_init, OmegaM, seed,
-    //param.boxsize, particles);
-    //snapshot->seed= seed;
-    //cola_set_snapshot(a_init, particles, snapshot);
-
-    // write initial condition to file
-
-    if(param.init_filename) {
-      set_noncola_initial(particles, snapshot);
-      write_snapshot(param.init_filename, snapshot, Hubble, 
-		     param.write_longid);
-    }
-
-    timer_set_category(COLA);
-
-#ifndef LOGTIMESTEP
-    particles->a_v= 0.5*da;
-    msg_printf(info, "timestep linear in a\n");
-#else
-    const double loga_init= log(a_init);
-    const double dloga= (log(a_final) - log(a_init))/nsteps;
-    particles->a_v= exp(log(a_init) - 0.5*dloga);
-    msg_printf(info, "timestep linear in loga\n");
-#endif
-
-
-    // Time evolution loop
-    if(nsteps > 1 && a_final > a_init) {
-      msg_printf(normal, "Time integration a= %g -> %g, %d steps\n", 
-		 a_init, a_final, nsteps);
-      for (int istep=1; istep<=nsteps; istep++) {
-	msg_printf(normal, "Timestep %d/%d\n", istep, nsteps);
-      
-                                                            timer_start(comm);
-        // move particles to other nodes
-        move_particles2(particles, param.boxsize, mem.mem1, mem.size1 );
-
-                                                            timer_stop(comm);
-
-        pm_calculate_forces(particles); 
-
-#ifndef LOGTIMESTEP
-	double avel0= (istep-0.5)*da;
-	double apos0=  istep*da;
-	
-	double avel1= (istep+0.5)*da;
-	double apos1= (istep+1.0)*da;
-#else
-	float avel0= exp(loga_init + (istep-0.5)*dloga);
-	float apos0= exp(loga_init + istep*dloga);
-	
-	float avel1= exp(loga_init + (istep+0.5)*dloga);
-	float apos1= exp(loga_init + (istep+1)*dloga);
-#endif
-      
-	while(iout < nout && avel0 <= aout[iout] && aout[iout] <= apos0) {
-	  snapshot_time(aout[iout], iout, particles, snapshot, param.subsample_filename, param.cgrid_filename, param.cgrid_nc, mem.mem1, mem.size1, param.write_longid);
-	  iout++;
-	}
-	if(iout >= nout) break;
-
-	cola_kick(particles, OmegaM, avel1);
-
-	while(iout < nout && apos0 < aout[iout] && aout[iout] <= avel1) {
-	  snapshot_time(aout[iout], iout,  particles, snapshot, param.subsample_filename, param.cgrid_filename, param.cgrid_nc, mem.mem1, mem.size1, param.write_longid);
-	  iout++;
-	}
-	if(iout >= nout) break;
-
-	cola_drift(particles, OmegaM, apos1);
-      }
-    }
-
-  }
-
-  // write ****
-  //write_snapshot("snp", particles, param.boxsize, OmegaM, Hubble);
-
-  // FOF halo finding ****
-
-  //move_particles(particles);
-  //write_slice("slice", particles->p, particles->np_local, param.boxsize/32, param.boxsize);
-  
-
-  //const float ll= 0.2*param.boxsize/param.nc;
-  //fof_find_halos(particles, param.boxsize, ll);
-
-
-  //write_slice("slice_ev", particles->p, particles->np_local, param.boxsize/32);
-
-  // finalize:
-  */
 
   MPI_Finalize();
   return 0;

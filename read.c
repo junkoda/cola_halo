@@ -13,22 +13,6 @@
 #include "msg.h"
 #include "gadget_file.h"
 
-/*
-typedef struct {
-  ParticleMinimum* p;
-  int np_local;
-  int np_allocated;
-  long long np_total;
-  float np_average;
-  float a; //, a_x, a_v;
-  float boxsize;
-  int nc;
-  float omega_m, h;
-  int seed;
-  char filename[64];
-} Snapshot;
-*/
-
 static int find_files(const char filename[]);
 
 static void check_separator(FILE* fp, int expected_value)
@@ -166,18 +150,6 @@ int read_snapshot(const char filename[], Snapshot* snapshot, void* buf, size_t s
   snapshot->h= (float) header.hubble_param;
   snapshot->np_local= nread;
 
-  /*
-  // debug!!!
-  for(int i=0; i<snapshot->np_local; i++) {
-    if(!(comm_xleft(0) <= snapshot->p[i].x[0] &&
-	 snapshot->p[i].x[0] < comm_xright(0))) {
-      printf("assertion fail %e, node=%d\n", p[i].x[0], comm_this_node());
-    }
-  }
-  printf("assert OK\n");
-  */
-
-  //printf("np_local %d\n", nread);
   long long np_local= nread, np_total;
   MPI_Reduce(&np_local, &np_total, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 

@@ -1,3 +1,6 @@
+//
+// Writes Gadget binary file
+//
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,14 +11,6 @@
 #include "write.h"
 #include "gadget_file.h"
 
-//#ifdef LONGIDS
-//typedef unsigned long long snpid_t;
-//#else
-//typedef unsigned int snpid_t;
-//#endif
-
-// ** particle mass
-// ** 64-bit id option
 void write_snapshot(const char filebase[], Snapshot const * const snapshot,
 		    int use_long_id)
 {
@@ -32,14 +27,6 @@ void write_snapshot(const char filebase[], Snapshot const * const snapshot,
   const int np= snapshot->np_local;
   const double boxsize= snapshot->boxsize;
   const double omega_m= snapshot->omega_m;
-
-  /*
-#ifdef LONGIDS
-  msg_printf(normal, "LONGIDS used for snapshot. %d-byte.\n", sizeof(snpid_t));
-#else
-  msg_printf(normal, "ID is %d-byte unsigned int\n", sizeof(snpid_t));
-#endif
-  */
 
   if(use_long_id)
     msg_printf(normal, "Longid is used for GADGET snapshot. %d-byte.\n", 
@@ -64,7 +51,6 @@ void write_snapshot(const char filebase[], Snapshot const * const snapshot,
   header.redshift= 1.0/header.time - 1;
   header.np_total[1]= (unsigned int) np_total;
   header.np_total_highword[1]= (unsigned int) (np_total >> 32);
-  //header.np_total[2]= (int) (np_total >> 32);
   header.num_files= comm_nnode();
   header.boxsize= boxsize;
   header.omega0= omega_m;
@@ -121,8 +107,6 @@ void write_snapshot(const char filebase[], Snapshot const * const snapshot,
 }
 
 // Writing Gadget file for subsampled particles
-//  *number of file = 1
-//  *ID is int
 void write_snapshot1(const char filename[], Snapshot const * const snapshot)
 {
   FILE* fp= fopen(filename, "w");
@@ -222,8 +206,6 @@ void write_force(const char filebase[], Particles const * const particles)
 }
 
 // Writing binary file for subsampled particles
-//  *number of file = 1
-//  *ID is int
 void write_particles_binary(const char filename[], Snapshot const * const snapshot)
 {
   FILE* fp= fopen(filename, "w");

@@ -34,16 +34,6 @@ int compare_slice(void const * const a, void const * const b)
 
 void comm_init(const int nc_pm, const int nc_p, const float boxsize)
 {
-  /*
-  ptrdiff_t local_nx, local_x_start;
-  fftwf_mpi_local_size_3d(nc_p, nc_p, nc_p, MPI_COMM_WORLD,
-			  &local_nx, &local_x_start);
-
-  Np_local_average= local_nx*nc_p*nc_p;
-  */
-
-  //** copied from pm.c code is redundunt now
-
   msg_printf(verbose, "comm initialization\n");
 
   MPI_Comm_rank(MPI_COMM_WORLD, &ThisNode);
@@ -53,7 +43,7 @@ void comm_init(const int nc_pm, const int nc_p, const float boxsize)
   int* local_x_table  = malloc(sizeof(int)*NNode*2); assert(local_x_table);
   int* local_nx_table = local_x_table + NNode;
 
-  // Print LPT initial domein decomposition (just for information**)
+  // Print LPT initial domein decomposition
   fftwf_mpi_local_size_3d(nc_p, nc_p, nc_p, MPI_COMM_WORLD,
 			  &local_nx, &local_x_start);
 
@@ -115,8 +105,6 @@ void comm_init(const int nc_pm, const int nc_p, const float boxsize)
     }
   }
 
-  //printf("Node initialized Node[%d]= %d, Node[%d]= %d\n", ToRight, RightNode, ToLeft, LeftNode);
-
   free(local_x_table);
 }
 
@@ -140,8 +128,6 @@ int comm_get_nrecv(enum Direction direction, int nsend)
   int nrecv;
   MPI_Status status;
 
-  //printf("Node %d %d\n", Node[0], Node[1]);
-  //printf("%d: %d -> %d\n", ThisNode, Node[direction], Node[!direction]);
   fflush(stdout);
 
   assert(Ngrid);
@@ -224,7 +210,3 @@ int comm_node(const int dix) {
   return Slices[i].node;
 }
 
-//int comm_local_nx(void)
-//{
-//  return Local_nx;
-//}

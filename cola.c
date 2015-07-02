@@ -68,7 +68,7 @@ double Sq(double ai, double af, double aRef);
 float Qfactor(const float a);
 
 // Leap frog time integration
-// ** Total momentum adjustment dropped
+// Total momentum adjustment in the original serial code dropped
 
 void cola_kick(Particles* const particles, const float Omega_m,
 	       const float avel1)
@@ -151,116 +151,6 @@ void cola_drift(Particles* const particles, const float Omega_m,
   particles->a_x= AF;
                                                             timer_stop(evolve);
 }
-
-/*
-void cola_evolve(Particles* const particles, const float Omega_m, 
-		  const float apos0, const float apos1,
-		  const float avel0, const float avel1)
-{
-                                                          timer_start(evolve);
-  float AI=  avel0; 
-  float A=   apos0; // A
-  float AFF= apos1; // A+da
-  float AF=  avel1; // A+0.5*da
-
-  msg_printf(normal, "Time integration %g -> %g\n", apos0, apos1);
-  Om= Omega_m;
-
-  const float Om143= pow(Om/(Om + (1 - Om)*A*A*A), 1.0/143.0);
-  const float dda= Sphi(AI, AF, A);
-  const float growth1=growthD(A);
-  const float growth1L2=growthD2(A);
-
-  msg_printf(normal, "growth factor %g\n", growth1);
-
-  const float q2=1.5*Om*growth1*growth1*(1.0 + 7.0/3.0*Om143)*A;
-  const float q1=1.5*Om*growth1*A; // ** This A cancels A in ax below
-
-
-  Particle* const P= particles->p;
-  const int np= particles->np_local;
-  float3* const f= particles->force;
-  
-  //
-  // Kick using acceleration at a= apos0
-  //
-  double sumx[]= {0.0, 0.0, 0.0};
-
-
-  for(int i=0; i<np; i++) {
-    float ax= -1.5*Om*f[i][0] - subtractLPT*(P[i].dx1[0]*q1 + P[i].dx2[0]*q2)/A;
-    float ay= -1.5*Om*f[i][1] - subtractLPT*(P[i].dx1[1]*q1 + P[i].dx2[1]*q2)/A;
-    float az= -1.5*Om*f[i][2] - subtractLPT*(P[i].dx1[2]*q1 + P[i].dx2[2]*q2)/A;
-
-
-    P[i].v[0] += ax*dda;
-    P[i].v[1] += ay*dda;
-    P[i].v[2] += az*dda;
-
-
-    sumx[0] += P[i].v[0];
-    sumx[1] += P[i].v[1];
-    sumx[2] += P[i].v[2];
-  }
-  // velocity is now at a= avel1
-  particles->a_v= avel1;
-  
-
-  double sumx_global[3];
-  MPI_Reduce(sumx, sumx_global, 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-  msg_printf(debug, 
-	     "sumx %e %e %e\n", sumx_global[0], sumx_global[1], sumx_global[2]);
-
-  float AC=AF;
-  AF=AFF;
-  float dyyy=Sq(A,AF,AC);
-
-  float da1= growthD(AF) - growth1; // change in D
-  float da2= growthD2(AF) - growth1L2; // change in D_{2lpt}
-    
-
-  for(int i=0; i<np; i++) {
-    // Drift a0 -> a2
-    P[i].x[0] += P[i].v[0]*dyyy + 
-                 subtractLPT*(P[i].dx1[0]*da1 + P[i].dx2[0]*da2);
-    P[i].x[1] += P[i].v[1]*dyyy +
-                 subtractLPT*(P[i].dx1[1]*da1 + P[i].dx2[1]*da2);
-    P[i].x[2] += P[i].v[2]*dyyy + 
-                 subtractLPT*(P[i].dx1[2]*da1 + P[i].dx2[2]*da2);
-  }
-    
-  A=AF;
-  particles->a_x= A;
-  // bug: don't do this for all the time
-  //const float vfac=A/Qfactor(A);
-  //for(int i=0; i<np; i++) { // convert unit
-  //  P[i].v[0] *= vfac;
-  //  P[i].v[1] *= vfac;
-  //  P[i].v[2] *= vfac;
-  //  }
-  
-
-  //msg_printf(debug, "dda= %g, dyyy= %g\n", dda, dyyy);
-  msg_printf(verbose, "Evolve to a = %g\n", A);
-                                                            timer_stop(evolve);
-}
-*/
-
-/* *** Note that velocities are LPT subtracted
-   Needs to add back for output
-    if (timeStep==nsteps){
-        //At final timestep, add back LPT velocities if we had subtracted them. This corresponds to L_+ operator in TZE.
-        Dv=DprimeQ(A,1.0); // dD_{za}/dy
-        Dv2=growthD2v(A); // dD_{2lpt}/dy
-        for(i=0; i<NumPart; i++)
-        {
-            P[i+1].Vel[0]+=-sumx+(dXz[i]*Dv+dX2[i]*Dv2)*subtractLPT;
-            P[i+1].Vel[1]+=-sumy+(dYz[i]*Dv+dY2[i]*Dv2)*subtractLPT;
-            P[i+1].Vel[2]+=-sumz+(dZz[i]*Dv+dZ2[i]*Dv2)*subtractLPT;
-        }
-        goto finalize; // Sorry for "goto" :)
-    }
-*/
 
 
 float growthDtemp(const float a){
@@ -417,21 +307,13 @@ void set_noncola_initial(Particles const * const particles, Snapshot* const snap
 
   msg_printf(verbose, "Setting up inital snapshot at a= %4.2f (z=%4.2f) <- %4.2f %4.2f.\n", aout, 1.0f/aout-1, particles->a_x, particles->a_v);
 
-  //const float vfac=A/Qfactor(A); // RSD /h Mpc unit
   const float vfac= 100.0f/aout;   // km/s; H0= 100 km/s/(h^-1 Mpc)
-
-  //const float AI=  particles->a_v;
-  //const float A=   particles->a_x;
-  //const float AF=  aout;
 
   const float Dv=DprimeQ(aout, 1.0); // dD_{za}/dy
   const float Dv2=growthD2v(aout);   // dD_{2lpt}/dy
 
-  //const float da1= growthD(AF);
-  //const float da2= growthD2(AF);
-
-  //msg_printf(debug, "initial growth factor %e %e\n", da1, da2);
-  msg_printf(debug, "initial velocity factor %5.3f %e %e\n", aout, vfac*Dv, vfac*Dv2);
+  msg_printf(debug, "initial velocity factor %5.3f %e %e\n",
+	     aout, vfac*Dv, vfac*Dv2);
 
 #ifdef _OPENMP
   #pragma omp parallel for default(shared)  
@@ -479,9 +361,8 @@ void cola_set_snapshot(const double aout, Particles const * const particles, Sna
   const float dda= Sphi(AI, AF, A);
   const float growth1=growthD(A);
 
-  //msg_printf(normal, "set snapshot %f from %f %f\n", aout, AI, A);
-  //msg_printf(normal, "Growth factor of snapshot %f (a=%.3f)\n", growth1, A);
-  msg_printf(normal, "Growth factor of snapshot %f (a=%.3f)\n", growthD(AF), AF);
+  msg_printf(normal, "Growth factor of snapshot %f (a=%.3f)\n",
+	             growthD(AF), AF);
 
   const float q1=1.5*Om*growth1;
   const float q2=1.5*Om*growth1*growth1*(1.0 + 7.0/3.0*Om143);
@@ -493,14 +374,6 @@ void cola_set_snapshot(const double aout, Particles const * const particles, Sna
   const float AC= particles->a_v;
   const float dyyy=Sq(A, AF, AC);
 
-
-  /*
-  if(AF < A) {
-    float dyyy_backward= Sq(aminus, aout, AC) - Sq(aminus, A, AC);
-    msg_printf(debug, "dyyy drift backward %f ->%f = %e %e\n", 
-	       A, AF, dyyy, dyyy_backward);
-  }
-  */
 
   msg_printf(debug, "velocity factor %e %e\n", vfac*Dv, vfac*Dv2);
   msg_printf(debug, "RSD factor %e\n", aout/Qfactor(aout)/vfac);

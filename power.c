@@ -31,7 +31,6 @@ static struct pow_table
 void read_power_table_camb(const char filename[]);
 double normalize_power(const double a_init, const double sigma8);
 double TopHatSigma2(double R);
-//double GrowthFactor(double astart, double aend);
 
 
 void power_init(const char filename[], const double a_init, const double sigma8, const double omega_m, const double omega_lambda)
@@ -62,7 +61,6 @@ void power_init(const char filename[], const double a_init, const double sigma8,
 
 void read_power_table_camb(const char filename[])
 {
-  //char buf[500];
   double k, p;
   double fac= 1.0/(2.0*M_PI*M_PI);
   Norm= 1.0;
@@ -92,7 +90,6 @@ void read_power_table_camb(const char filename[])
     if(fscanf(fp, " %lg %lg ", &k, &p) == 2) {
       PowerTable[n].logk = log10(k);
       PowerTable[n].logD = log10(fac*k*k*k*p);
-      //printf("%e %e\n", PowerTable[n].logk, PowerTable[n].logD);
       n++;
     }
     else
@@ -117,20 +114,11 @@ double normalize_power(const double a_init, const double sigma8)
 
   msg_printf(info, "Input power spectrum sigma8 %f\n", sigma8_input);
 
-  //double Dplus = GrowthFactor(a_init, 1.0);
-  //msg_printf("Growth factor correction %f\n", 1.0/Dplus);
-  //msg_printf("sigma8_initial %f\n", sigma8/res/Dplus);
-
-  //return sigma8 * sigma8 / res / (Dplus*Dplus); **
-  //return 1.0/(Dplus*Dplus);
   return 1.0;
 }
 
 double PowerSpec(const double k)
 {
-  // k *= (InputSpectrum_UnitLength_in_cm / UnitLength_in_cm);
-  // convert to h/Mpc
-
   const double logk = log10(k);
 
   if(logk < PowerTable[0].logk || logk > PowerTable[NPowerTable - 1].logk)
@@ -158,8 +146,6 @@ double PowerSpec(const double k)
   const double Delta2 = pow(10.0, logD);
 
   double P = Norm * Delta2 / (4.0*M_PI*k*k*k);
-
-  //printf("%le %le\n", k, P);
 
   return P;
 }
