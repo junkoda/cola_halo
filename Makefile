@@ -4,6 +4,7 @@
 
 # Define OPENMP to enable MPI+OpenMP hybrid parallelization
 # OPENMP  = -fopenmp # -openmp for Intel, -fopenmp for gcc
+# Note that MacOS llvm does not suppoert OPENMP
 
 CC      = mpicc -std=c99 
 WOPT    ?= -Wall
@@ -12,11 +13,11 @@ LIBS    := -lm
 
 
 # Compile options
-
+# CFLAGS += -DUSE_LUA   # use LUA programming language for the parameter file
 
 # Define paths of FFTW3 & GSL libraries if necessary.
 
-LUA_DIR   ?= /opt/local
+LUA_DIR   ?= #e.g. /opt/local
 FFTW3_DIR ?= #e.g. /Users/jkoda/Research/opt/gcc/fftw3
 GSL_DIR   ?= #e.g. /Users/jkoda/Research/opt/gcc/gsl
 
@@ -29,14 +30,21 @@ EXEC = cola_halo # halo
 all: $(EXEC)
 
 OBJS := main.o
-OBJS += read_param_lua.o lpt.o msg.o power.o
+OBJS += lpt.o msg.o power.o confirm_param.o
 OBJS += pm.o cola.o fof.o comm.o move.o move_min.o
 OBJS += write.o timer.o mem.o
 OBJS += subsample.o coarse_grid.o
 
-LIBS += -llua -ldl 
 LIBS += -lgsl -lgslcblas
 LIBS += -lfftw3f_mpi -lfftw3f
+
+ifeq (,$(findstring -DUSE_LUA, $(CFLAGS)))
+  OBJS += read_param.o
+else
+  OBJS += read_param_lua.o
+  LIBS += -llua -ldl
+endif
+
 
 
 ifdef OPENMP

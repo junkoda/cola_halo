@@ -50,5 +50,6 @@ typedef struct {
 int read_parameters(const int argc, char * argv[], 
 		    Parameters* const param);
 
+void confirm_parameters(Parameters* const param, const char filename[]);
 
 #endif
