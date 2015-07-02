@@ -218,12 +218,19 @@ int read_parameter_file(const char filename[], Parameters* const param)
   char buf[1024];
   char name[64];
 
-  param->power_spectrum_filename= 0;
-  param->snapshot_filename= 0;
-  param->fof_filename= 0;
-  param->cgrid_filename= 0;
-  param->subsample_filename= 0;
-  param->init_filename= 0;
+  param->power_spectrum_filename   = 0;
+  param->snapshot_filename         = 0;
+  param->fof_filename              = 0;
+  param->cgrid_filename            = 0;
+  param->subsample_filename        = 0;
+  param->init_filename             = 0;
+
+  param->strlen_fof_filename       = 0;
+  param->strlen_snapshot_filename  = 0;
+  param->strlen_cgrid_filename     = 0;
+  param->strlen_subsample_filename = 0;
+  param->strlen_init_filename      = 0;
+
 
   param->omega_m = -1.0;
   param->sigma8  = -1.0;
