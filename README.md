@@ -17,11 +17,13 @@ Acceleration (COLA) method (Tassev, Zaldarriaga, & Eisenstein
 (Davis et al. 1985, [Washington University N-body shop][3]).
 
 
-This code is based on publicly avaiable codes ([1], [2], [3]),
+This code is based on publicly available codes ([1], [2], [3]),
 modified and redistributed under GPLv3.
 
-# Compile This code requires an MPI C compiler `mpicc`, GNU Scientific
-Library [GSL](https://www.gnu.org/software/gsl/) and
+# Compile
+
+This code requires an MPI C compiler `mpicc`, GNU Scientific Library
+[GSL](https://www.gnu.org/software/gsl/) and
 [FFTW](http://www.fftw.org/). If they are installed in nonstandard
 locations, set the variables `GSL_DIR` and `FFTW3_DIR` in the
 `Makefile`.
@@ -30,7 +32,7 @@ locations, set the variables `GSL_DIR` and `FFTW3_DIR` in the
 % make
 ```
 
-should compile the code and create the exectuable `cola_halo`.
+should compile the code and create the executable `cola_halo`.
 
 # Run
 
@@ -55,8 +57,8 @@ should compile the code and create the exectuable `cola_halo`.
    mpirun -n 4 cola_halo param.lua
 ```
 Where 4 is the number of MPI nodes you use. It can be any number, but
-we recomend it is a divisor of the number of particle per dimension
-`nc` for effiective domain decomposition.
+we recommend it is a divisor of the number of particle per dimension
+`nc` for effective domain decomposition.
 
 # Outputs
 
@@ -97,10 +99,10 @@ on the `USE_LUA` option in the parameter file.
 
 # Related codes
 
-- l-picola: Another paralell COLA implementation by Cullan Howlett and
+- l-picola: Another parallel COLA implementation by Cullan Howlett and
   Marc Manera [4], including on-the-fly lightcone generation.
 
-- QrPM: A fork of this code. The paralelization improved by using 2D
+- QrPM: A fork of this code. The parallelisation improved by using 2D
   domain decomposition. [5]
 
 
@@ -108,7 +110,7 @@ on the `USE_LUA` option in the parameter file.
 
 This code is assembled and parallelized (COLA & FOF) by Jun Koda. See
 reference 5 below about the application to the mock generation of
-WiggleZ Dark Energy survey and its accuracy. Feel free to [open an
+WiggleZ Dark Energy Survey and its accuracy. Feel free to [open an
 issue](https://github.com/junkoda/cola_halo/issues) for bug reports or
 questions.
 
