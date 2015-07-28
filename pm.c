@@ -176,6 +176,8 @@ void pm_init(const int nc_pm, const int nc_pm_factor, const float boxsize,
   const int ncp= nc_pm/nc_pm_factor;
   NParticleTotal= (long long) ncp*ncp*ncp;
 
+  // If you encounter "sendrecv_buffer" shortage,
+  // this number should be increased
   const int nbuf= ncp*ncp;
 
   BufPos.nbuf= nbuf;
@@ -441,7 +443,7 @@ int send_buffer_positions(Particles* const particles, BufferVec3* buf)
     }
 
     if(nsend >= nbuf)
-      msg_abort(6100, "Error: Not enough space for rendrecv_buffer: "
+      msg_abort(6100, "Error: Not enough space for sendrecv_buffer: "
 		      "%d buffer particles\n", nsend);
   }
   buf->nsend= nsend;
