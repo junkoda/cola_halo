@@ -410,6 +410,7 @@ void cola_set_snapshot(const double aout, Particles const * const particles, Sna
   }
 
   snapshot->np_local= np;
+  snapshot->np_average= particles->np_average;
   snapshot->a= aout;
                                                            timer_stop(interp);
 }
