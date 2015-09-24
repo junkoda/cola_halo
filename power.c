@@ -108,7 +108,7 @@ double normalize_power(const double a_init, const double sigma8)
   double res = TopHatSigma2(R8); 
   double sigma8_input= sqrt(res);
 
-  if(abs(sigma8_input - sigma8)/sigma8 > 0.05)
+  if(fabs(sigma8_input - sigma8)/sigma8 > 0.05)
     msg_abort(3010, "Input sigma8 %f is far from target sigma8 %f\n",
 	      sigma8_input, sigma8);
 

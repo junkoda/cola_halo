@@ -550,7 +550,7 @@ int lpt_set_displacement(const double InitTime, const double omega_m, const int 
 	  //2LPT velocity
 	  //P[n].Vel[axes] = dis * vel_prefac - 3.0/7.0 * dis2 * vel_prefac2;
 	  //dis & dis2 has growth factor
-	  float dis_mag= fabsf(dis*Dplus - 3.0/7.0*D20*dis2*D2);
+	  float dis_mag= (float) fabs(dis*Dplus - 3.0/7.0*D20*dis2*D2);
 	  if(dis_mag > maxdisp)
 	    maxdisp= dis_mag;
 	}
