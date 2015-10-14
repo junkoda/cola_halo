@@ -85,6 +85,7 @@ static inline float REd(float const * const d, const int i, const int j, const i
 }
 
 void pm_init(const int nc_pm, const int nc_pm_factor, const float boxsize,
+	     const float np_alloc_factor,
 	     void* const mem1, const size_t size1,
 	     void* const mem2, const size_t size2)
 {
@@ -178,7 +179,8 @@ void pm_init(const int nc_pm, const int nc_pm_factor, const float boxsize,
 
   // If you encounter "sendrecv_buffer" shortage,
   // this number should be increased
-  const int nbuf= ncp*ncp;
+  const int nbuf=
+    (int) ceil(np_alloc_factor*ncp*ncp + 5*sqrt(np_alloc_factor*ncp*ncp));
 
   BufPos.nbuf= nbuf;
   BufPos.vec  = malloc(sizeof(float)*3*nbuf);

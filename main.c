@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
   snapshot->filename= param.snapshot_filename;
   
 
-  pm_init(nc_factor*param.nc, nc_factor, param.boxsize,
+  pm_init(nc_factor*param.nc, nc_factor, param.boxsize, param.np_alloc_factor,
 	  mem.mem1, mem.size1, mem.mem2, mem.size2);
   fof_init(particles->np_allocated, param.nc, mem.mem1, mem.size1);
   subsample_init(param.subsample_factor, param.random_seed);
