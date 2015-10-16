@@ -4,8 +4,6 @@ move_min.c
 move_min.h
 cola_halo
 halo
-camb0_matterpower.dat
-slice_*.txt
-exchange_buffer
-original
-bak
+tools/density_grid
+tools/rescale_power
+tools/subsampled_particles
