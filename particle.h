@@ -41,4 +41,10 @@ typedef struct {
   char* filename;
 } Snapshot;
 
+typedef struct {
+  float x[3];
+  float v[3];
+  //float f[3];
+} ParticleSubsample;
+
 #endif

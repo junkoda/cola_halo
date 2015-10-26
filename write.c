@@ -205,7 +205,7 @@ void write_force(const char filebase[], Particles const * const particles)
   fclose(fp);
 }
 
-// Writing binary file for subsampled particles
+// Writes binary file for subsampled particles. Old version, not in use.
 void write_particles_binary(const char filename[], Snapshot const * const snapshot)
 {
   FILE* fp= fopen(filename, "w");
@@ -241,4 +241,71 @@ void write_particles_binary(const char filename[], Snapshot const * const snapsh
   int ret= fclose(fp); assert(ret == 0);
 
   msg_printf(normal, "subsample binary %s written\n", filename);
+}
+
+// Writes binary file for subsampled particles
+// Newer version using Parallel write MPI_File_write_at
+void write_particles_binary_mpi(const char filename[], ParticleSubsample const * const p, const int np, float const * const header)
+{
+  //
+  // Gather number of particles to compute the offset for writing
+  // 
+  const int this_node= comm_this_node();
+  const int nnode= comm_nnode();
+
+  int* const np_local= malloc(sizeof(int)*nnode); assert(np_local);
+
+  int ret= 
+    MPI_Gather(&np, 1, MPI_INT, np_local, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  assert(ret == MPI_SUCCESS);
+
+  int np_total= 0; // Total number of subsample particles
+  if(this_node == 0) {
+    for(int i=0; i<nnode; i++) {
+      int np_i= np_local[i];
+      np_local[i]= np_total;
+        // np_local <- partial_sum = Sum_{inode}^{this node - 1} np
+      np_total  += np_i;
+    }
+  }
+
+  int np_partial_sum= 0;
+  ret= MPI_Scatter(np_local, 1, MPI_INT,
+		   &np_partial_sum, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  assert(ret == MPI_SUCCESS);
+
+  const size_t nfloat_header= 6;
+  size_t offset= sizeof(float)*nfloat_header + sizeof(int) +
+                 sizeof(ParticleSubsample)*np_partial_sum;
+
+  // Write particles to a file
+  MPI_File fh;
+  MPI_Status stat;
+  ret= MPI_File_open(MPI_COMM_WORLD, filename,
+		     MPI_MODE_CREATE | MPI_MODE_WRONLY,
+		     MPI_INFO_NULL, &fh); assert(ret == MPI_SUCCESS);
+
+  if(this_node == 0) {
+    // header: boxsize, m_particle, omega_m, h, a, redshift & np_total
+    ret= MPI_File_write_at(fh, 0, header, sizeof(float)*nfloat_header,
+		      MPI_BYTE, &stat); assert(ret == MPI_SUCCESS);
+    ret= MPI_File_write_at(fh, sizeof(float)*nfloat_header, &np_total,
+		     sizeof(int), MPI_BYTE, &stat); assert(ret == MPI_SUCCESS);
+  }
+
+  assert(sizeof(ParticleSubsample) % sizeof(float) == 0);
+  MPI_File_write_at(fh, offset, p, sizeof(ParticleSubsample)*np,
+		    MPI_BYTE, &stat);
+
+  if(this_node == 0) {
+    // footer: np_total
+    size_t offset_footer= sizeof(float)*nfloat_header + sizeof(int) +
+                          sizeof(ParticleSubsample)*np_total;
+    ret= MPI_File_write_at(fh, offset_footer, &np_total, sizeof(int),
+			   MPI_BYTE, &stat); assert(ret == MPI_SUCCESS);
+  }
+
+  ret= MPI_File_close(&fh); assert(ret == MPI_SUCCESS);
+  
+  msg_printf(verbose, "Subsampled particles %d written\n", np_total);
 }

@@ -52,6 +52,8 @@ void comm_init(const int nc_pm, const int nc_p, const float boxsize)
   MPI_Allgather(&local_x_start, 1, MPI_INT, local_x_table, 1, MPI_INT, 
 		MPI_COMM_WORLD);
 
+  msg_printf(info, "%d MPI nodes\n", NNode);
+
   for(int i=0; i<NNode; i++)
     msg_printf(debug, "LPT Task=%d x=%d..%d\n", i, local_x_table[i],
                       local_x_table[i]+local_nx_table[i]-1);

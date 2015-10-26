@@ -34,7 +34,10 @@ void subsample_finalize(void)
    gsl_rng_free(Random_generator);
 }
 
-void write_random_sabsample(const char filename[], Snapshot const * const snapshot, void* const mem, size_t mem_size)
+
+// Oldversion: collect subsample to node 0 and then write to file
+// newer version below (write_random_subsample()) uses MPI_File_write
+void write_random_sabsample1(const char filename[], Snapshot const * const snapshot, void* const mem, size_t mem_size)
 {
   ParticleMinimum const * const p= snapshot->p;
   const int np= snapshot->np_local;
@@ -108,6 +111,53 @@ void write_random_sabsample(const char filename[], Snapshot const * const snapsh
   }
   free(nsub_recv);
 }
+
+void write_random_sabsample(const char filename[], Snapshot const * const snapshot, void* const mem, size_t mem_size)
+{
+  // Assumption: Number of subsampled particles are < max(int) (2^31 for 4-byte)
+  ParticleMinimum const * const p= snapshot->p;
+  const int np= snapshot->np_local;
+  const int nbuf = mem_size/sizeof(ParticleSubsample);
+  
+  if(SubsampleFactor*np + 5*sqrt(SubsampleFactor*np) > nbuf) { 
+    msg_abort(9300, 
+	      "Not enough memory for local subsampling ~ %.2lf particles\n",
+	      SubsampleFactor*np);
+  }
+
+  ParticleSubsample* out= (ParticleSubsample*) mem;
+  int nsub= 0; // number of subsampled particles in this node
+  for(int i=0; i<np; i++) {
+    if(gsl_rng_uniform(Random_generator) < SubsampleFactor) {
+      out[nsub].x[0]= p[i].x[0];
+      out[nsub].x[1]= p[i].x[1];
+      out[nsub].x[2]= p[i].x[2];
+      out[nsub].v[0]= p[i].v[0];
+      out[nsub].v[1]= p[i].v[1];
+      out[nsub].v[2]= p[i].v[2];
+      //out[nsub].f[0]= p[i].f[0];
+      //out[nsub].f[1]= p[i].f[1];
+      //out[nsub].f[2]= p[i].f[2];
+      nsub++;
+    }
+  }
+
+  // Subsample file header
+  const double rho_crit = 27.7455;
+  const float redshift= 1.0/snapshot->a - 1.0;
+
+  float header[6];
+  header[0]= snapshot->boxsize;
+  header[1]= snapshot->omega_m*rho_crit*pow(snapshot->boxsize, 3.0)/np;
+             // particle mass
+  header[2]= snapshot->omega_m;
+  header[3]= snapshot->h;
+  header[4]= snapshot->a;
+  header[5]= redshift;
+
+  write_particles_binary_mpi(filename, out, nsub, header);
+}
+
 
 // Regular subsampling (not used, but has a benefit of not having shot noise)
 
