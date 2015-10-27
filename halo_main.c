@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 
   const int nc= param.nc;
   ptrdiff_t local_nx, local_x_start;
-  fftwf_mpi_local_size_3d(nc, nc, nc, MPI_COMM_WORLD,
+  fftwf_mpi_local_size_3d(nc, nc, nc/2+1, MPI_COMM_WORLD,
 			  &local_nx, &local_x_start);
 
 

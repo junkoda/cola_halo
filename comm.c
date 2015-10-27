@@ -44,7 +44,7 @@ void comm_init(const int nc_pm, const int nc_p, const float boxsize)
   int* local_nx_table = local_x_table + NNode;
 
   // Print LPT initial domein decomposition
-  fftwf_mpi_local_size_3d(nc_p, nc_p, nc_p, MPI_COMM_WORLD,
+  fftwf_mpi_local_size_3d(nc_p, nc_p, nc_p/2+1, MPI_COMM_WORLD,
 			  &local_nx, &local_x_start);
 
   MPI_Allgather(&local_nx, 1, MPI_INT, local_nx_table, 1, MPI_INT, 
@@ -63,7 +63,7 @@ void comm_init(const int nc_pm, const int nc_p, const float boxsize)
   BoxSize= boxsize;
   Tag= 600;
 
-  fftwf_mpi_local_size_3d_transposed(Ngrid, Ngrid, Ngrid, MPI_COMM_WORLD,
+  fftwf_mpi_local_size_3d_transposed(Ngrid, Ngrid, Ngrid/2+1, MPI_COMM_WORLD,
 			  &local_nx, &local_x_start, &local_ny, &local_y_start);
 
   Local_nx= local_nx;
