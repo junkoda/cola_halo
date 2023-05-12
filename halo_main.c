@@ -3,7 +3,12 @@
 //   Read Gadget snapshot and does data analysis only, 
 //   FoF halo finding/density field/particle subsampling
 //
-
+// 1. Snapshot must be in directory written in `dirs.txt`
+// 2. Snapshot filename must be snp_000, snp_001, ... for multiple redshifts (not a b c)
+//    Modify sprintf(filebase, "%s/%s_%03d", dirname, param.snapshot_filename, iout) for other format
+//    Snapshot can be distributed to multiple files snp_000.0, snp_000.1, ...
+//    `snp` is specified in param.lua snapshot= "snp"
+//
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,22 +33,20 @@
 #include "read.h"
 
 // TODO: update this with parameters in param
-const double OmegaLambda = 0.727;
 const double OmegaM      = 0.273;
 const double Hubble      = 0.705;
-const double sigma8      = 0.812;
 
 static const int nc_factor= 3;
 
 int mpi_init(int* p_argc, char*** p_argv);
 void fft_init(int threads_ok);
 void snapshot_time(const float aout, const int iout, 
-		   Particles const * const particles, 
-		   Snapshot * const snapshot, 
-		   const char subsample_filename[], 
-		   const char cgrid_filename[], const int cgrid_nc,
-		   void* const mem1, const size_t size1,
-		   const int write_longid);
+       Particles const * const particles, 
+       Snapshot * const snapshot, 
+       const char subsample_filename[], 
+       const char cgrid_filename[], const int cgrid_nc,
+       void* const mem1, const size_t size1,
+       const int write_longid);
 
 int main(int argc, char* argv[])
 {
@@ -67,24 +70,27 @@ int main(int argc, char* argv[])
   const int nc= param.nc;
   ptrdiff_t local_nx, local_x_start;
   fftwf_mpi_local_size_3d(nc, nc, nc/2+1, MPI_COMM_WORLD,
-			  &local_nx, &local_x_start);
-
+        &local_nx, &local_x_start);
 
   Particles* particles= 
      allocate_particles(param.nc, local_nx, param.np_alloc_factor);
+
   Snapshot* snapshot= allocate_snapshot(param.nc, local_nx, 
-				  particles->np_allocated, mem.mem2, mem.size2);
+          particles->np_allocated, mem.mem2, mem.size2);
   snapshot->boxsize= param.boxsize;
   snapshot->omega_m= OmegaM;
   snapshot->h= Hubble;
   snapshot->seed= 0;//***
-  strncpy(snapshot->filename, param.snapshot_filename, 64);
+
+  
+  //snapshot->filename= malloc(64); // never free (memory leak)
+  //strncpy(snapshot->filename, param.snapshot_filename, 64);
+  snapshot->filename= param.snapshot_filename;
 
   fof_init(particles->np_allocated, param.nc, mem.mem1, mem.size1);
   subsample_init(param.subsample_factor, param.random_seed);
 
   const int this_node= comm_this_node();
-  //
 
   // for each directories given
   char dirname[256];
@@ -94,17 +100,20 @@ int main(int argc, char* argv[])
     fp_dir= fopen("dirs.txt", "r");
     if(fp_dir == 0)
       msg_abort(0, "Unable to open list of directories dirs.txt\n");
-  }    
+  }
                                                        timer_set_category(Snp);
   while(1) {
     if(this_node == 0) {
       char* sget= fgets(dirname, 255, fp_dir);
       if(sget == NULL)
-	dirname[0]= '\0';
+        dirname[0]= '\0';
       else {
-	const int last= strlen(dirname)-1;
-	if(dirname[last] == '\n') dirname[last]= '\0';
+        const int last= strlen(dirname)-1;
+        if(dirname[last] == '\n')
+          dirname[last]= '\0';
       }
+      if(dirname[0] != '\0')
+        printf("Enter directory: %s\n", dirname);
     }
 
     MPI_Bcast(dirname, 255, MPI_BYTE, 0, MPI_COMM_WORLD);
@@ -116,40 +125,41 @@ int main(int argc, char* argv[])
 
     char filebase[256];
     for(int iout=0; iout<100000; iout++) { 
-      
-      if(snapshot->filename)
-	msg_abort(1, "filename snapshot is not set in the parameter file\n");
+      if(strlen(snapshot->filename) == 0)
+        msg_abort(1, "filename snapshot is not set in the parameter file\n");
 
       sprintf(filebase, "%s/%s_%03d", dirname, param.snapshot_filename, iout);
 
-      int file_found= 
-	read_snapshot(filebase, snapshot, mem.mem1, mem.size1);
+      if(this_node == 0)
+        printf("Read %s\n", filebase);
+
+      int file_found= read_snapshot(filebase, snapshot, mem.mem1, mem.size1);
 
       if(file_found == 0) {
-	if(iout == 0)
-	  msg_abort(2, "Unable to read snapshot %s\n", filebase);
-	break;
+        if(iout == 0)
+          msg_abort(2, "Unable to read snapshot %s\n", filebase);
+        break;
       }
-						       
+                   
       const float boxsize= snapshot->boxsize; assert(boxsize > 0.0f);
 
-						       timer_start(sub);
+                                                              timer_start(sub);
       // subsample
       if(param.subsample_filename) {
-	sprintf(filebase, "%s/%s_%03d.b", dirname, param.subsample_filename, iout);
-	//sprintf(filebase, "%s%05d%c.b", param.subsample_filename, snapshot->seed, suffix);
-	//write_subsample(filebase, subsample_factor, snapshot, mem1, size1);
-	write_random_sabsample(filebase, snapshot, mem.mem1, mem.size1);
+        sprintf(filebase, "%s/%s_%03d.b", dirname, param.subsample_filename, iout);
+        //sprintf(filebase, "%s%05d%c.b", param.subsample_filename, snapshot->seed, suffix);
+        //write_subsample(filebase, subsample_factor, snapshot, mem1, size1);
+        write_random_sabsample(filebase, snapshot, mem.mem1, mem.size1);
       }
 
       // coarse mesh
       if(param.cgrid_filename) {
-	sprintf(filebase, "%s/%s_%03d.b", dirname, param.cgrid_filename, iout);
-	//sprintf(filebase, "%s%05d%c.b", param.cgrid_filename, snapshot->seed, suffix);
-	coarse_grid2(filebase, snapshot, param.cgrid_nc, mem.mem1, mem.size1);
+        sprintf(filebase, "%s/%s_%03d.b", dirname, param.cgrid_filename, iout);
+        //sprintf(filebase, "%s%05d%c.b", param.cgrid_filename, snapshot->seed, suffix);
+        coarse_grid2(filebase, snapshot, param.cgrid_nc, mem.mem1, mem.size1);
       }
 
-                                                       timer_stop(sub);
+                                                               timer_stop(sub);
 
       const float ll= 0.2*boxsize/nc; // FOF linking length
       fof_find_halos(snapshot, ll);
@@ -159,14 +169,11 @@ int main(int argc, char* argv[])
       //sprintf(filebase, "fof%05d%c.txt", snapshot->seed, suffix);
       fof_write_halos(filebase);
 
-                                                       timer_set_category(COLA);
-
-
+                                                      timer_set_category(COLA);
 
       timer_print();
     }
   }
-
   
   if(this_node == 0)
     fclose(fp_dir);
@@ -195,7 +202,7 @@ int mpi_init(int* p_argc, char*** p_argv)
     else
       printf("Warning: MPI + multi thread not supported. 1 thread per node.\n");
   }
-	
+  
   return hybrid_parallel;
 #else
   MPI_Init(p_argc, p_argv);

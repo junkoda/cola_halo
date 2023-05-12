@@ -51,7 +51,8 @@ int read_snapshot(const char filename[], Snapshot* snapshot, void* buf, size_t s
 
   GadgetHeader header;
   float vfac_back; // Gadget convention back to km/s
-      
+  
+  // When snapshot is distributed, .0, .1, ...., reads all of them
   for(int num = 0; num<numfiles; num++) {
     int np_snapshot= 0;
 
@@ -59,14 +60,13 @@ int read_snapshot(const char filename[], Snapshot* snapshot, void* buf, size_t s
       char filename_i[256];
 
       if(numfiles > 1)
-	sprintf(filename_i, "%s.%d", filename, num);
+	      sprintf(filename_i, "%s.%d", filename, num);
       else
-	sprintf(filename_i, "%s", filename);
+	      sprintf(filename_i, "%s", filename);
 
       FILE* fp= fopen(filename_i, "r");
       if(fp == 0) {
-	msg_abort(15000, "Error: can't open snapshot file %s (read.c)\n", 
-		  filename_i);
+	      msg_abort(15000, "Error: can't open snapshot file %s (read.c)\n", filename_i);
       }
       
       check_separator(fp, 256);
@@ -76,11 +76,12 @@ int read_snapshot(const char filename[], Snapshot* snapshot, void* buf, size_t s
       np_snapshot = header.np[1];   // This code only reads type 1 dark matter
       vfac_back= sqrt(header.time);
 
-      msg_printf(verbose, "%d particles read from %s.\n", 
-		 np_snapshot, filename_i);
+      msg_printf(verbose, "%d particles read from %s.\n", np_snapshot, filename_i);
 
       if(np_snapshot*sizeof(float)*6 > size) {
-	msg_abort(15001, "Error: Not enough space to read snapshot. %d particles in %s, buffer size= %ld.", np_snapshot, filename_i, size); 
+	      msg_abort(15001,
+                  "Error: Not enough space to read snapshot. %d particles in %s, buffer size= %ld.",
+                  np_snapshot, filename_i, size); 
       }
 
       int ret;
@@ -93,9 +94,10 @@ int read_snapshot(const char filename[], Snapshot* snapshot, void* buf, size_t s
 
       const float boxsize= (float) header.boxsize;
 
+      // Periodic wrap up
       for(int i=0; i<3*np_snapshot; i++) {
-	if(x[i] < 0.0f) x[i] += boxsize;
-	if(x[i] >= boxsize) x[i] -= boxsize;
+	      if(x[i] < 0.0f) x[i] += boxsize;
+	      if(x[i] >= boxsize) x[i] -= boxsize;
       }
 
       // velocity      
@@ -107,34 +109,33 @@ int read_snapshot(const char filename[], Snapshot* snapshot, void* buf, size_t s
       fclose(fp);
     }
     
+    // Broadcast the particles to all nodes
     MPI_Bcast(&np_snapshot, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&vfac_back, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Bcast(x, np_snapshot * 6, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
     const float x_left= comm_xleft(0);
     const float x_right= comm_xright(0);
-
-
     float* v= x + 3*np_snapshot;
 
+    // Keep the particle in this node
     for(int i=0; i<np_snapshot; ++i) {
       if(x_left <= x[3*i] && x[3*i] < x_right) {
-	if(nread >= snapshot->np_allocated) {
-	  msg_abort(15002, 
-		   "Error: Not enough space (np_allocated) to read snapshot\n");
-	}
+  	    if(nread >= snapshot->np_allocated) {
+	        msg_abort(15002, "Error: Not enough space (np_allocated) to read snapshot\n");
+	      }
 
-	p[nread].x[0]= x[3*i    ];
-	p[nread].x[1]= x[3*i + 1];
-	p[nread].x[2]= x[3*i + 2];
+        p[nread].x[0]= x[3*i    ];
+        p[nread].x[1]= x[3*i + 1];
+        p[nread].x[2]= x[3*i + 2];
 
-	p[nread].v[0]= vfac_back*v[3*i    ];
-	p[nread].v[1]= vfac_back*v[3*i + 1];
-	p[nread].v[2]= vfac_back*v[3*i + 2];
+        p[nread].v[0]= vfac_back*v[3*i    ];
+        p[nread].v[1]= vfac_back*v[3*i + 1];
+        p[nread].v[2]= vfac_back*v[3*i + 2];
 
-	p[nread].id= 0;
+        p[nread].id= 0;
 
-	nread++;
+        nread++;
       }
     }
   }

@@ -26,7 +26,7 @@ DIR_PATH = $(FFTW3_DIR) $(GSL_DIR) $(LUA_DIR)
 CFLAGS += $(foreach dir, $(DIR_PATH), -I$(dir)/include)
 LIBS   += $(foreach dir, $(DIR_PATH), -L$(dir)/lib)
 
-EXEC = cola_halo # halo
+EXEC = cola_halo halo
 all: $(EXEC)
 
 OBJS := main.o
@@ -90,9 +90,15 @@ move_min.o: move_min.c msg.h move_min.h particle.h comm.h
 # "halo" -- cola_halo without cola, only does FoF etc.
 #
 OBJS2 := halo_main.o read.o
-OBJS2 += read_param_lua.o msg.o fof.o comm.o move_min.o
+OBJS2 += msg.o fof.o comm.o move_min.o
 OBJS2 += write.o timer.o mem.o 
 OBJS2 += subsample.o coarse_grid.o
+
+ifeq (,$(findstring -DUSE_LUA, $(CFLAGS)))
+  OBJS2 += read_param.o
+else
+  OBJS2 += read_param_lua.o
+endif
 
 halo: $(OBJS2)
 	$(CC) $(OBJS2) $(LIBS) -o $@
