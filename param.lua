@@ -18,7 +18,7 @@ np_alloc_factor= 1.25      -- Amount of memory allocated for particle
 loglevel=2                 -- 0=debug, 1=verbose, 2=normal, ...
                            -- increase the value to reduce output msgs
 
-powerspectrum= "camb0_matterpower.dat" -- Initial power spectrum: k P(k)
+powerspectrum= "data/linear_matterpower.dat" -- Initial power spectrum: k P(k)
 
 -- Options
 --   Following outputs can be turned off by commenting out

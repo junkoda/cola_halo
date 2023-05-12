@@ -50,7 +50,7 @@ static char* get_name(char* p, char* name)
   // name = value
   p= skip_spaces(p);
 
-  while(*p != ' ' && *p != '=' && p != '\0')
+  while(*p != ' ' && *p != '=' && *p != '\0')
     *name++ = *p++;
 
   *name='\0';
